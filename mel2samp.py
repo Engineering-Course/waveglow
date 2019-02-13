@@ -87,9 +87,9 @@ class Mel2Samp(torch.utils.data.Dataset):
         # Read audio
         filename = self.audio_files[index]
         audio, sampling_rate = load_wav_to_torch(filename)
-        if sampling_rate != self.sampling_rate:
-            raise ValueError("{} SR doesn't match target {} SR".format(
-                sampling_rate, self.sampling_rate))
+        #if sampling_rate != self.sampling_rate:
+        #    raise ValueError("{} SR doesn't match target {} SR".format(
+        #        sampling_rate, self.sampling_rate))
 
         # Take segment
         if audio.size(0) >= self.segment_length:

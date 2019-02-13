@@ -89,7 +89,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
     # =====START: ADDED FOR DISTRIBUTED======
     train_sampler = DistributedSampler(trainset) if num_gpus > 1 else None
     # =====END:   ADDED FOR DISTRIBUTED======
-    train_loader = DataLoader(trainset, num_workers=1, shuffle=False,
+    train_loader = DataLoader(trainset, num_workers=2, shuffle=False,
                               sampler=train_sampler,
                               batch_size=batch_size,
                               pin_memory=False,
@@ -167,5 +167,5 @@ if __name__ == "__main__":
         raise Exception("Doing single GPU training on rank > 0")
 
     torch.backends.cudnn.enabled = True
-    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.benchmark = True
     train(num_gpus, args.rank, args.group_name, **train_config)
