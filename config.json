@@ -31,7 +31,7 @@
         "n_early_every": 4,
         "n_early_size": 2,
         "WN_config": {
-            "n_layers": 4,
+            "n_layers": 8,
             "n_channels": 256,
             "kernel_size": 3
         }
