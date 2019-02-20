@@ -37,6 +37,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 from glow import WaveGlow, WaveGlowLoss
 from mel2samp import Mel2Samp
+from tensorboardX import SummaryWriter
 
 def load_checkpoint(checkpoint_path, model, optimizer):
     assert os.path.isfile(checkpoint_path)
@@ -59,7 +60,7 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
                 'optimizer': optimizer.state_dict(),
                 'learning_rate': learning_rate}, filepath)
 
-def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
+def train(num_gpus, rank, group_name, writer, output_directory, epochs, learning_rate,
           sigma, iters_per_checkpoint, batch_size, seed, checkpoint_path):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -124,6 +125,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
             optimizer.step()
 
             print("{}:\t{:.9f}".format(iteration, reduced_loss))
+            writer.add_scalar("loss", reduced_loss, iteration)
 
             if (iteration % iters_per_checkpoint == 0):
                 if rank == 0:
@@ -168,4 +170,5 @@ if __name__ == "__main__":
 
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
-    train(num_gpus, args.rank, args.group_name, **train_config)
+    writer = SummaryWriter(log_dir=train_config['output_directory'])
+    train(num_gpus, args.rank, args.group_name, writer, **train_config)
