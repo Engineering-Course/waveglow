@@ -28,6 +28,7 @@ import argparse
 import json
 import os
 import torch
+import timeit
 
 #=====START: ADDED FOR DISTRIBUTED======
 from distributed import init_distributed, apply_gradient_allreduce, reduce_tensor
@@ -107,6 +108,8 @@ def train(num_gpus, rank, group_name, writer, output_directory, epochs, learning
     epoch_offset = max(0, int(iteration / len(train_loader)))
     # ================ MAIN TRAINNIG LOOP! ===================
     for epoch in range(epoch_offset, epochs):
+        start_epoch = timeit.default_timer()
+        timer = start_epoch
         print("Epoch: {}".format(epoch))
         for i, batch in enumerate(train_loader):
             model.zero_grad()
@@ -124,8 +127,11 @@ def train(num_gpus, rank, group_name, writer, output_directory, epochs, learning
             loss.backward()
             optimizer.step()
 
-            print("{}:\t{:.9f}".format(iteration, reduced_loss))
-            writer.add_scalar("loss", reduced_loss, iteration)
+            if iteration % show_iter == 0:
+                end_timer = timeit.default_timer()
+                print("{}:\t{:.9f}, time: {}".format(iteration, reduced_loss, end_timer - timer))
+                writer.add_scalar("loss", reduced_loss, iteration)
+                timer = end_timer
 
             if (iteration % iters_per_checkpoint == 0):
                 if rank == 0:
@@ -135,6 +141,8 @@ def train(num_gpus, rank, group_name, writer, output_directory, epochs, learning
                                     checkpoint_path)
 
             iteration += 1
+        end_epoch = timeit.default_timer()
+        print ("Finish epoch {}, time: {}".format(epoch, end_epoch-start_epoch))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -144,6 +152,8 @@ if __name__ == "__main__":
                         help='rank of process for distributed')
     parser.add_argument('-g', '--group_name', type=str, default='',
                         help='name of group for distributed')
+    parser.add_argument('-s', '--show_iteration', type=int, default=20,
+                        help='iteration of showing loss')
     args = parser.parse_args()
 
     # Parse configs.  Globals nicer in this case
@@ -157,6 +167,8 @@ if __name__ == "__main__":
     dist_config = config["dist_config"]
     global waveglow_config
     waveglow_config = config["waveglow_config"]
+    global show_iter
+    show_iter = args.show_iteration
 
     num_gpus = torch.cuda.device_count()
     if num_gpus > 1:

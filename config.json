@@ -10,8 +10,8 @@
         "checkpoint_path": ""
     },
     "data_config": {
-        "training_files":"filelists/train_files_bznsyp.txt",
-        "segment_length": 16000,
+        "training_files":"filelists/train_files_ljspeech.txt",
+        "segment_length": 8000,
         "sampling_rate": 22050,
         "filter_length": 1024,
         "hop_length": 256,
